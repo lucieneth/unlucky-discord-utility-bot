@@ -58,17 +58,48 @@ client.once('ready', async () => {
   const statusArray = ['dnd', 'online', 'online', 'online'];
   let index = 0;
 
-  setInterval(() => {
+  // GTA VI countdown: 18.11.2026 12:00 CET (UTC+1) = NZ midnight release
+  const GTA_RELEASE = new Date('2026-11-18T12:00:00+01:00').getTime();
+  const COUNTDOWN_TICK_MS = 5000; // Discord gateway allows ~120 events/min; 1s updates risk rate limits
+  const pad = (n) => String(n).padStart(2, '0');
+
+  const rotateStatus = () => {
     if (index >= nameArray.length) index = 0;
-    const names = nameArray[index];
-    const statuses = statusArray[index];
-    const types = typeArray[index];
-    client.user.setPresence({ 
-      activities: [{ name: names, type: types }], 
-      status: statuses 
+    client.user.setPresence({
+      activities: [{ name: nameArray[index], type: typeArray[index] }],
+      status: statusArray[index],
     });
     index++;
-  }, 10000);
+  };
+
+  const OUT_STATUS_MS = 24 * 60 * 60 * 1000; // show "GTA VI IS OUT!" for 24h after release
+  const startRotation = () => {
+    rotateStatus();
+    setInterval(rotateStatus, 10000);
+  };
+
+  const countdownTimer = setInterval(() => {
+    const msLeft = GTA_RELEASE - Date.now();
+    if (msLeft <= 0) {
+      clearInterval(countdownTimer);
+      const outMsLeft = OUT_STATUS_MS + msLeft;
+      if (outMsLeft <= 0) return startRotation();
+      client.user.setPresence({
+        activities: [{ name: 'Custom Status', state: '🎮 GTA VI IS OUT!', type: ActivityType.Custom }],
+        status: 'online',
+      });
+      setTimeout(startRotation, outMsLeft);
+      return;
+    }
+    const totalSec = Math.floor(msLeft / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    client.user.setPresence({
+      activities: [{ name: 'Custom Status', state: `🎮 GTA VI in ${h}h ${pad(m)}m ${pad(s)}s`, type: ActivityType.Custom }],
+      status: 'online',
+    });
+  }, COUNTDOWN_TICK_MS);
 
   // Load self-role data and set up reaction collector
   try {
