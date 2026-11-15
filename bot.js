@@ -60,7 +60,7 @@ client.once('ready', async () => {
 
   // GTA VI countdown: 18.11.2026 12:00 CET (UTC+1) = NZ midnight release
   const GTA_RELEASE = new Date('2026-11-18T12:00:00+01:00').getTime();
-  const COUNTDOWN_TICK_MS = 5000; // Discord gateway allows ~120 events/min; 1s updates risk rate limits
+  const COUNTDOWN_TICK_MS = 1000; // 60 presence updates/min (gateway limit is 120 events/min)
   const pad = (n) => String(n).padStart(2, '0');
 
   const rotateStatus = () => {
